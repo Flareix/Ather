@@ -372,6 +372,45 @@ canvas.paint.instant{transition:none}
 .sync-pill.syncing{opacity:.8}
 .sync-pill.err{background:rgba(158,47,77,.5);border-color:rgba(255,200,210,.7)}
 
+.aether-inner{--padL:clamp(16px,5vw,64px);--padR:clamp(16px,5vw,64px);padding-left:var(--padL);padding-right:var(--padR)}
+.arch-wrap{position:relative;margin:30px calc(-1 * var(--padR)) 10px calc(-1 * var(--padL))}
+.archipelago{display:flex;flex-wrap:nowrap;align-items:flex-end;gap:28px;margin:0;padding:16px 0 24px var(--padL);overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;scrollbar-width:none;position:relative;overscroll-behavior-x:contain}
+.archipelago::-webkit-scrollbar{display:none}
+.archipelago::after{content:'';flex:0 0 calc(var(--padR) - 28px)}
+.archipelago > .cluster{flex:0 0 max(300px, calc((100% - var(--padR) - 56px) / 3));scroll-snap-align:center}
+.archipelago > .cluster:first-child{margin-left:auto}
+.archipelago > .cluster:last-child{margin-right:auto}
+.arch-nav{position:absolute;bottom:42%;z-index:3;display:none;place-items:center;width:46px;height:46px;border-radius:50%;cursor:pointer;color:#fff;background:rgba(9,45,105,.34);border:1px solid rgba(255,255,255,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.arch-nav:hover{background:rgba(9,45,105,.5)}
+.arch-nav svg{width:18px;height:18px}
+.arch-nav.show{display:grid}
+.arch-nav.prev{left:14px}
+.arch-nav.next{right:86px}
+.ceiling-track{overflow-x:auto;overflow-y:hidden;scrollbar-width:none;overscroll-behavior-x:contain}
+.ceiling-track::-webkit-scrollbar{display:none}
+.ceiling-track canvas.paint{max-width:none}
+@media (max-width:720px){
+  .aether-inner{--padR:54px}
+  .archipelago > .cluster{flex-basis:calc(100% - var(--padR) - 26px)}
+}
+@media (hover:none){ .arch-nav{display:none!important} }
+.arch-dots{display:none;justify-content:center;gap:2px;margin:-8px 0 0;position:relative;z-index:2}
+.arch-dots.show{display:flex}
+.arch-dot{width:26px;height:26px;border:0;background:none;padding:0;display:grid;place-items:center;cursor:pointer}
+.arch-dot::after{content:'';width:11px;height:11px;border-radius:50%;background:var(--c);border:2px solid rgba(255,255,255,.92);box-shadow:0 1px 4px rgba(9,45,105,.45);opacity:.6;transition:transform .2s,opacity .2s}
+.arch-dot.on::after{opacity:1;transform:scale(1.4)}
+.ceiling-track{scroll-snap-type:x proximity}
+#scroll-0{scroll-snap-type:x proximity}
+.snap-row{position:relative}
+.snap-pt{position:absolute;top:0;width:1px;height:1px;scroll-snap-align:center;pointer-events:none}
+
+.moving *,.moving *::before,.moving *::after{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+.taproot::before{left:-1px;width:28px;border-radius:0;box-shadow:none;background:var(--root-tile) center top/28px 240px repeat-y;-webkit-mask-image:linear-gradient(#000 88%,transparent);mask-image:linear-gradient(#000 88%,transparent)}
+.seed{position:relative;z-index:1;width:18px;height:18px;margin-top:5px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.95) 0 1.6px,rgba(255,255,255,0) 4.5px),radial-gradient(circle closest-side,var(--cl) 0%,var(--c) 58%,var(--cd) 100%);
+  box-shadow:0 0 0 2px rgba(255,255,255,.82),0 0 10px 2px var(--cg),0 0 24px 6px var(--cg2)}
+.z-aether::after{content:'';position:absolute;left:0;right:0;bottom:0;height:calc(var(--vh)*.09);z-index:0;pointer-events:none;background:linear-gradient(rgba(246,249,255,0),rgba(246,249,255,.92) 70%,rgb(247,250,255))}
+
 /* ---------- toast ---------- */
 .toast{position:fixed;top:16px;left:50%;z-index:40;transform:translate(-50%,-170%);visibility:hidden;background:rgba(8,28,70,.92);color:#fff;border:1px solid rgba(255,214,107,.7);padding:9px 20px;border-radius:999px;font-weight:700;font-size:16px;box-shadow:0 10px 24px -8px rgba(0,20,60,.6);transition:transform .35s cubic-bezier(.3,1.3,.5,1),visibility 0s .35s;max-width:calc(100% - 32px);text-align:center}
 .toast.show{transform:translate(-50%,0);visibility:visible;transition:transform .35s cubic-bezier(.3,1.3,.5,1)}
@@ -455,8 +494,6 @@ canvas.paint.instant{transition:none}
 <div class="layer near" id="L-near" aria-hidden="true">
   <div class="puff" style="top:calc(var(--vh)*1.0);left:-14%;width:max(72vw,560px);height:calc(var(--vh)*.28)"></div>
   <div class="puff" style="top:calc(var(--vh)*1.04);right:-16%;width:max(66vw,560px);height:calc(var(--vh)*.28)"></div>
-  <div class="puff" style="top:calc(var(--vh)*2.3);left:-12%;width:max(72vw,560px);height:calc(var(--vh)*.28)"></div>
-  <div class="puff" style="top:calc(var(--vh)*2.34);right:-14%;width:max(64vw,560px);height:calc(var(--vh)*.28)"></div>
 </div>
 
 <nav class="rail" id="rail" aria-label="Places"></nav>
@@ -574,7 +611,8 @@ function normalize(d){
       objectives: Array.isArray(q.objectives) ? q.objectives.filter(o => o && typeof o.text === 'string').map(o => ({ id: String(o.id || uid()), text: o.text.slice(0, 140), done: !!o.done })) : [],
       created: +q.created || Date.now(),
       completed: status === 'done' ? (+q.completed || Date.now()) : undefined,
-      updated: +q.updated || +q.completed || +q.created || 0
+      updated: +q.updated || +q.completed || +q.created || 0,
+      undo: (status === 'done' && q.undo && typeof q.undo === 'object') ? { open: Array.isArray(q.undo.open) ? q.undo.open.map(String) : [], xp: +q.undo.xp || 0, follow: !!q.undo.follow } : undefined
     };
   });
   const xpBy = {}, deleted = {};
@@ -666,7 +704,7 @@ function agoShort(ts){
 
 /* what goes into the gist: a fixed shape, so two copies of the same data compare equal */
 const canonQuest = q => ({ id: q.id, title: q.title, status: q.status, categoryId: q.categoryId, difficulty: q.difficulty, giver: q.giver || '', lore: q.lore || '', reward: q.reward || '',
-  objectives: (q.objectives || []).map(o => ({ id: o.id, text: o.text, done: !!o.done })), created: q.created || 0, completed: q.completed || null, updated: q.updated || 0 });
+  objectives: (q.objectives || []).map(o => ({ id: o.id, text: o.text, done: !!o.done })), created: q.created || 0, completed: q.completed || null, updated: q.updated || 0, undo: q.undo || null });
 function forRemote(s){
   return { version: 2, worldName: s.worldName, nameAt: s.nameAt || 0, followId: s.followId || null, followAt: s.followAt || 0, xpBy: s.xpBy || {}, seenHint: !!s.seenHint,
     categories: s.categories.map(c => ({ id: c.id, name: c.name, color: c.color, pos: c.pos || 0, updated: c.updated || 0 })),
@@ -1725,9 +1763,9 @@ function paintRootsCeiling(ctx, W, H, spec, S){
     const x0 = r() * W;
     rootStrand(ctx, { x0, y0: base * .6, len: H * (.22 + r() * .4), sway: (r() - .5) * 30, w: .8 + r() * 1.1, green: r() < .25, x1: x0 + (r() - .5) * 20, rootlets: 1, segs: 16, alpha: .55 }, r, .55);
   }
-  const crowded = items.some((a, i) => !(a.xf > 0 && a.xf < 1) || items.some((b, j) => j !== i && Math.abs(a.xf - b.xf) < .12));
+  const crowded = items.some((a, i) => !(a.xf > 0) || items.some((b, j) => j !== i && Math.abs(a.xf - b.xf) < 60));
   items.forEach((it, i) => {
-    const cx = (crowded ? (i + .5) / m : it.xf) * W, bw = Math.min(240, W / m * .75), roots = [], nR = 10 + (r() * 6 | 0);
+    const cx = crowded ? (i + .5) / m * W : it.xf, bw = Math.min(240, (crowded ? W / m : 400) * .75), roots = [], nR = 10 + (r() * 6 | 0);
     for (let k = 0; k < nR; k++){ const x0 = cx + (r() - .5) * bw; roots.push({ x0, y0: base * (.55 + r() * .25), len: H * (.45 + r() * .5), sway: (r() - .5) * 40, w: 1.6 + r() * 3.4, green: r() < .3, x1: x0 + (r() - .5) * 26 }); }
     roots.sort((a, b) => b.w - a.w);
     for (const R of roots) rootStrand(ctx, R, r, 0);
@@ -1740,6 +1778,9 @@ function paintRootsCeiling(ctx, W, H, spec, S){
   });
   for (let i = 0; i < 14; i++) paintGlow(ctx, W * r(), base + H * (.05 + r() * .25), 30 + r() * 50, [255, 255, 255], .22);
   paintCloudCeiling(ctx, W, base, r);
+  const top = ctx.createLinearGradient(0, 0, 0, base * .62);
+  top.addColorStop(0, 'rgb(247,250,255)'); top.addColorStop(.35, 'rgba(247,250,255,.85)'); top.addColorStop(1, 'rgba(247,250,255,0)');
+  ctx.fillStyle = top; ctx.fillRect(0, 0, W, base * .62);
   ctx.save(); ctx.globalCompositeOperation = 'destination-out';
   const bf = ctx.createLinearGradient(0, H * .7, 0, H); bf.addColorStop(0, 'rgba(0,0,0,0)'); bf.addColorStop(1, 'rgba(0,0,0,1)');
   ctx.fillStyle = bf; ctx.fillRect(0, H * .7, W, H * .3); ctx.restore();
@@ -1792,13 +1833,36 @@ function parallaxZone(i){
   else y = -Math.min(sc.scrollTop * (i === 1 ? .12 : .1), extra);
   cv.style.transform = `translate3d(0,${y.toFixed(1)}px,0)`;
 }
+function rowGeom(){
+  const arch = document.querySelector('#aether .archipelago'); if (!arch) return null;
+  const zr = $('zone-1').getBoundingClientRect(), ar = arch.getBoundingClientRect(), cl = [...arch.children].filter(e => e.classList.contains('cluster'));
+  if (!ar.width || cl.length !== state.categories.length) return null;
+  return { padL: ar.left - zr.left, padR: zr.right - ar.right, contentW: arch.scrollWidth, colW: cl[0] ? cl[0].offsetWidth : 300, centers: cl.map(c => c.offsetLeft + c.offsetWidth / 2) };
+}
+const rowWidth = (rg, Wv) => rg ? Math.max(Wv, Math.round(rg.padL + rg.contentW + rg.padR)) : Wv;
+const snapPoints = rg => rg ? rg.centers.map(c => `<span class="snap-pt" style="left:${Math.round(rg.padL + c)}px" aria-hidden="true"></span>`).join('') : '';
 function rootsCeilingSlot(){
-  const W = Math.round($('scroll-2').clientWidth || innerWidth), H = Math.round(Math.max(340, Math.min(540, innerHeight * .56)));
-  const z = $('zone-1').getBoundingClientRect(), cl = [...document.querySelectorAll('#aether .cluster')];
-  const xf = i => { const el = cl[i]; if (!el || !z.width) return 0; const b = el.getBoundingClientRect(); return Math.round((b.left + b.width / 2 - z.left) / z.width * 1000) / 1000; };
-  const spec = state.categories.map((c, i) => `${hash(c.id)}:${c.color.slice(1)}:${state.quests.filter(q => q.status === 'done' && q.categoryId === c.id).length}:${xf(i)}`).join(',');
+  const Wv = Math.round($('scroll-2').clientWidth || innerWidth), H = Math.round(Math.max(340, Math.min(540, innerHeight * .56))), rg = rowGeom(), W = rowWidth(rg, Wv);
+  const spec = state.categories.map((c, i) => `${hash(c.id)}:${c.color.slice(1)}:${state.quests.filter(q => q.status === 'done' && q.categoryId === c.id).length}:${rg ? Math.round(rg.padL + rg.centers[i]) : 0}`).join(',');
   const S = Math.min(1.5, DPR);
-  return `<canvas class="paint roots-ceiling" data-key="R|${W}|${H}|${spec}" width="${Math.round(W * S)}" height="${Math.round(H * S)}" aria-hidden="true"></canvas>`;
+  return `<div class="ceiling-track"><div class="snap-row" style="width:${W}px"><canvas class="paint roots-ceiling" data-key="R|${W}|${H}|${spec}" width="${Math.round(W * S)}" height="${Math.round(H * S)}" style="width:${W}px" aria-hidden="true"></canvas>${snapPoints(rg)}</div></div>`;
+}
+/* one sideways position shared by the islands, the constellations above them, and the roots below them */
+function applySlide(){
+  const v = ui.slide || 0, els = [document.querySelector('#aether .archipelago'), $('scroll-0'), document.querySelector('.ceiling-track')];
+  els.forEach(el => { if (el && Math.abs(el.scrollLeft - v) > 1) el.scrollLeft = v; });
+}
+function updateArchNav(){
+  const a = document.querySelector('#aether .archipelago'); if (!a) return;
+  const max = a.scrollWidth - a.clientWidth - 2, p = document.querySelector('.arch-nav.prev'), n = document.querySelector('.arch-nav.next');
+  if (p) p.classList.toggle('show', a.scrollLeft > 2);
+  if (n) n.classList.toggle('show', a.scrollLeft < max);
+  const dots = document.querySelector('.arch-dots'); if (!dots) return;
+  dots.classList.toggle('show', max > 2);
+  const mid = a.scrollLeft + a.clientWidth / 2, cl = [...a.children].filter(e => e.classList.contains('cluster'));
+  let best = 0, bd = Infinity;
+  cl.forEach((c, i) => { const d = Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid); if (d < bd){ bd = d; best = i; } });
+  dots.querySelectorAll('.arch-dot').forEach((d, i) => { d.classList.toggle('on', i === best); d.setAttribute('aria-current', i === best ? 'true' : 'false'); });
 }
 function fadeEdges(ctx, w, h, fx, fy){
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalCompositeOperation = 'destination-in';
@@ -1810,6 +1874,45 @@ function fadeEdges(ctx, w, h, fx, fy){
   gy.addColorStop(0, 'rgba(0,0,0,0)'); gy.addColorStop(fy, 'rgba(0,0,0,1)'); gy.addColorStop(1 - fy, 'rgba(0,0,0,1)'); gy.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = gy; ctx.fillRect(0, 0, W, Hh);
   ctx.restore();
+}
+
+/* the root that runs down the list of finished quests: a painted tile that repeats seamlessly */
+function rootTileURL(){
+  const W = 28, H = 240, [c, x] = mkCanvas(W, H, 2), r = rng(97);
+  const cxAt = y => 14 + 2.6 * Math.sin(y / H * Math.PI * 2) + 1.1 * Math.sin(y / H * Math.PI * 6);
+  const wAt = y => 6.4 + 1.3 * Math.sin(y / H * Math.PI * 4 + 1);
+  const wrap = y => ((y % H) + H) % H;
+  for (let y = 0; y < H; y += .5){
+    const cx = cxAt(y), w = wAt(y), g = x.createLinearGradient(cx - w / 2, 0, cx + w / 2, 0);
+    g.addColorStop(0, '#A9825E'); g.addColorStop(.38, '#7E5B40'); g.addColorStop(1, '#4A3424');
+    x.fillStyle = g; x.fillRect(cx - w / 2, y, w, .9);
+  }
+  for (let i = 0; i < 28; i++){
+    const y0 = r() * H, len = 18 + r() * 48, off = (r() - .5) * .7, lw = .5 + r() * .55, col = r() < .55 ? 'rgba(46,30,20,.5)' : 'rgba(214,176,134,.38)';
+    for (const sh of [-H, 0, H]){
+      x.strokeStyle = col; x.lineWidth = lw; x.beginPath();
+      for (let t = 0; t <= 1.001; t += .1){ const y = y0 + sh + t * len, yy = wrap(y); const px = cxAt(yy) + off * wAt(yy); t === 0 ? x.moveTo(px, y) : x.lineTo(px, y); }
+      x.stroke();
+    }
+  }
+  x.lineCap = 'round';
+  for (let i = 0; i < 3; i++){
+    const y0 = 14 + i * 74 + r() * 30, dir = i % 2 ? 1 : -1, cx = cxAt(y0);
+    x.strokeStyle = 'rgba(112,82,58,.95)'; x.lineWidth = 1.4;
+    x.beginPath(); x.moveTo(cx + dir * 2.4, y0); x.quadraticCurveTo(cx + dir * 8, y0 + 4, cx + dir * 11, y0 + 13); x.stroke();
+    x.strokeStyle = 'rgba(112,82,58,.7)'; x.lineWidth = .8;
+    x.beginPath(); x.moveTo(cx + dir * 7, y0 + 4); x.quadraticCurveTo(cx + dir * 10, y0 + 5, cx + dir * 13, y0 + 4); x.stroke();
+  }
+  for (let i = 0; i < 16; i++){
+    const y = 4 + r() * (H - 8), cx = cxAt(y);
+    x.fillStyle = `rgba(${100 + r() * 40 | 0},${160 + r() * 40 | 0},${90 + r() * 30 | 0},.78)`;
+    x.beginPath(); x.ellipse(cx - 2 + (r() - .5) * 3, y, 1.4 + r(), .8 + r() * .6, 0, 0, 7); x.fill();
+  }
+  return c.toDataURL('image/png');
+}
+function seedStyle(hex){
+  const c = hexRGB(hex), l = mixC(c, [255, 255, 255], .45), d = mixC(c, [27, 42, 85], .35);
+  return `--c:${hex};--cl:${rgba(l)};--cd:${rgba(d)};--cg:${rgba(c, .55)};--cg2:${rgba(c, .2)}`;
 }
 
 /* ================= render: world ================= */
@@ -1846,7 +1949,10 @@ function renderAether(){
     </div>
   </header>`;
   if (!state.seenHint) h += `<div class="hint-note"><p>Tap an islet to open its quest. Scroll up past the clouds to reach the stars, or down to the roots.</p><button class="btn btn-quiet btn-sm" data-action="dismiss-hint">Got it</button></div>`;
-  h += `<div class="archipelago">${state.categories.map(clusterHTML).join('')}</div>`;
+  h += `<div class="arch-wrap"><div class="archipelago">${state.categories.map(clusterHTML).join('')}</div>
+    <button class="arch-nav prev" data-action="slide" data-dir="-1" aria-label="Show earlier islands"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5 5.5 8 10 12.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button class="arch-nav next" data-action="slide" data-dir="1" aria-label="Show more islands"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <div class="arch-dots" role="group" aria-label="Islands">${state.categories.map((c, i) => `<button class="arch-dot" data-action="slide-to" data-i="${i}" style="--c:${c.color}" aria-label="Show ${esc(c.name)}"></button>`).join('')}</div></div>`;
   h += `<section class="wind" aria-label="Rumors">
     <h2 class="wind-h">On the wind</h2>
     <p class="wind-sub">Rumors are quests you've heard about but haven't taken on. Note them here without committing to anything.</p>
@@ -1855,7 +1961,7 @@ function renderAether(){
   </section>
   <button class="edge edge-bottom" data-go="2">${ICON.down}Descend to the roots</button>`;
   $('aether').innerHTML = h;
-  hydrate($('aether')); drawStreams();
+  hydrate($('aether')); drawStreams(); applySlide(); updateArchNav();
   ui.prevInto = into;
   if (startW !== into) requestAnimationFrame(() => requestAnimationFrame(() => { const f = $('xpfill'); if (f) f.style.width = into + '%'; }));
 }
@@ -1895,7 +2001,7 @@ function renderFirmament(){
   const sc = $('scroll-0'), cv = $('firm-canvas');
   const cats = state.categories, n = cats.length;
   const Wv = sc.clientWidth || innerWidth, Hv = sc.clientHeight || innerHeight;
-  const gutter = innerWidth <= 720 ? 52 : 0, W = Math.max(Wv, n * 112 + gutter), colW = (W - gutter) / n;
+  const gutter = innerWidth <= 720 ? 52 : 0, rg = rowGeom(), W = rg ? rowWidth(rg, Wv) : Math.max(Wv, n * 112 + gutter), colW = rg ? rg.colW + 28 : (W - gutter) / n;
   const SP = Hv < 640 ? 84 : 96, BASE = 172, TOP = 190;
   const cols = cats.map((c, i) => ({
     c, i,
@@ -1913,7 +2019,7 @@ function renderFirmament(){
   }
   let threads = '', stars = '', labels = '';
   cols.forEach(k => {
-    const cx = colW * (k.i + .5), col = k.c.color, spread = Math.min(colW * .5, 130);
+    const cx = rg ? rg.padL + rg.centers[k.i] : colW * (k.i + .5), col = k.c.color, spread = Math.min(colW * .5, 130);
     const pts = k.done.map((q, m) => { const rr = rng(hash(q.id)); return { q, x: cx + (rr() - .5) * spread, y: H - BASE - m * SP - (rr() - .5) * 30 }; });
     const last = pts[pts.length - 1];
     const pending = !!(ui.pendingStar && last && last.q.id === ui.pendingStar);
@@ -1945,7 +2051,8 @@ function renderFirmament(){
       <text x="${f1(cx)}" y="${H - BASE + 80}" class="cat-count">${k.done.length ? k.done.length + (k.done.length === 1 ? ' star' : ' stars') : 'No stars yet'}</text>`;
   });
   cv.style.width = W + 'px'; cv.style.height = H + 'px';
-  cv.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="group" aria-label="Constellations">${bg}${threads}${labels}${stars}</svg><div class="tip" id="firm-tip" aria-hidden="true"></div>`;
+  cv.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="group" aria-label="Constellations">${bg}${threads}${labels}${stars}</svg>${snapPoints(rg)}<div class="tip" id="firm-tip" aria-hidden="true"></div>`;
+  applySlide();
   if (ui.animateSeg){
     ui.animateSeg = false;
     const p = cv.querySelector('.seg-new');
@@ -1990,12 +2097,12 @@ function renderRoots(){
     list.forEach(q => { const m = fmtMonth(q.completed); let g = groups[groups.length - 1]; if (!g || g.m !== m){ g = { m, items: [] }; groups.push(g); } g.items.push(q); });
     h += `<div class="taproot">${groups.map(g => `<section class="month"><h3>${esc(g.m)}</h3><ol class="deeds">${g.items.map(q => {
       const c = catOf(q);
-      return `<li><button class="deed" data-action="open" data-id="${q.id}"><span class="seed" style="--c:${c.color}" aria-hidden="true"></span><span class="deed-title">${esc(q.title)}</span><span class="deed-meta">${esc(c.name)}, ${esc(fmtShort(q.completed))}${q.reward ? `. Reward: ${esc(q.reward)}` : ''}</span></button></li>`;
+      return `<li><button class="deed" data-action="open" data-id="${q.id}"><span class="seed" style="${seedStyle(c.color)}" aria-hidden="true"></span><span class="deed-title">${esc(q.title)}</span><span class="deed-meta">${esc(c.name)}, ${esc(fmtShort(q.completed))}${q.reward ? `. Reward: ${esc(q.reward)}` : ''}</span></button></li>`;
     }).join('')}</ol></section>`).join('')}</div>`;
   }
   h += `</div>`;
   $('roots').innerHTML = h;
-  hydrate($('roots'));
+  hydrate($('roots')); applySlide();
 }
 
 /* ================= render: journal ================= */
@@ -2069,6 +2176,7 @@ function questBody(q){
     h += ui.confirm === 'del' ? confirm('Remove this quest from your roots and the firmament? Your XP stays.', 'Yes, remove it')
       : `<button class="btn btn-leaf" data-action="see-star">See its star</button>
          <button class="btn btn-ghost" data-action="again">Take on again</button>
+         <button class="btn btn-ghost" data-action="uncomplete">Mark as not done</button>
          <button class="btn btn-quiet" data-action="ask-del">Remove</button>`;
   }
   return h + `</div>`;
@@ -2183,6 +2291,10 @@ function closeJournal(){
 
 /* ================= navigation ================= */
 const scrollers = [$('scroll-0'), $('scroll-1'), $('scroll-2')];
+/* flying through the cloud sea between the aether and the roots */
+let movingT = null;
+function moving(){ document.body.classList.add('moving'); clearTimeout(movingT); movingT = setTimeout(() => document.body.classList.remove('moving'), 1650); }
+
 function applyCamera(instant){
   const vh = window.innerHeight;
   if (instant) document.body.classList.add('no-anim');
@@ -2209,8 +2321,9 @@ function go(z, opts){
   if (ui.journal) closeJournal();
   if (z === 0 && !opts.keepScroll){ const sc = scrollers[0]; sc.scrollTop = sc.scrollHeight; }
   if (ui.zone === 0 && z !== 0) hideVictory();
-  hideTip();
+  hideTip(); applySlide();
   if (z === ui.zone){ applyCamera(); return; }
+  moving();
   ui.zone = z;
   navLock = Date.now() + 1600;
   edge[z] = {};
@@ -2257,7 +2370,7 @@ function showVictory(){
     ${lvl > v.levelBefore ? `<p class="v-level">You reached level ${lvl}. Your new title is ${esc(rankOf(lvl))}.</p>` : ''}
     ${q.reward ? `<div class="v-claim"><span>Go claim your reward</span><strong>${esc(q.reward)}</strong></div>` : ''}
     <p class="v-note">A new star joins the ${esc(c.name)} constellation.</p>
-    <div class="v-actions"><button class="btn btn-sun" data-action="v-return">Back to the aether</button><button class="btn btn-quiet v-quiet" data-action="v-stay">Stay and stargaze</button></div>`;
+    <div class="v-actions"><button class="btn btn-sun" data-action="v-return">Back to the aether</button><button class="btn btn-quiet v-quiet" data-action="v-stay">Stay and stargaze</button><button class="btn btn-quiet v-quiet" data-action="v-undo">Undo, I didn't finish it</button></div>`;
   box.hidden = false; box.classList.remove('show'); void box.offsetWidth; box.classList.add('show');
   $('firm-down').hidden = true;
   setTimeout(() => { const b = box.querySelector('.btn'); if (b) b.focus({ preventScroll: true }); }, 60);
@@ -2319,6 +2432,7 @@ function saveForm(){
 function completeQuest(){
   const q = currentQ(); if (!q) return;
   const levelBefore = levelOf(state.xp), gained = questXP(q);
+  q.undo = { open: q.objectives.filter(o => !o.done).map(o => o.id), xp: gained, follow: state.followId === q.id };
   q.objectives.forEach(o => { o.done = true; });
   q.status = 'done'; q.completed = Date.now();
   state.xp += gained;
@@ -2331,6 +2445,17 @@ function completeQuest(){
   go(0, { keepScroll: true });
   vTimer = setTimeout(showVictory, reduced ? 50 : 2500);
 }
+function uncompleteQuest(q){
+  if (!q || q.status !== 'done') return;
+  const u = q.undo || {}, open = new Set(u.open || []);
+  q.objectives.forEach(o => { if (open.has(o.id)) o.done = false; });
+  q.status = 'active'; q.completed = undefined; delete q.undo;
+  state.xp = Math.max(0, state.xp - (u.xp != null ? u.xp : questXP(q)));
+  if (u.follow && !state.quests.some(x => x.id === state.followId && x.status === 'active')) state.followId = q.id;
+  if (ui.recallId === q.id) ui.recallId = null;
+  persist();
+}
+
 function exportBackup(){
   const d = new Date(), stamp = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   state.lastExport = Date.now();
@@ -2472,6 +2597,10 @@ const A = {
   'sync-off': () => { ui.confirm = 'sync-off'; renderJournal(); },
   'sync-off-yes': () => { disconnectSync(); },
   'sync-link': () => { copySetupLink(); },
+  'slide-to': el => { const a = document.querySelector('#aether .archipelago'); if (!a) return; const c = [...a.children].filter(e => e.classList.contains('cluster'))[+el.dataset.i]; if (c) a.scrollTo({ left: c.offsetLeft + c.offsetWidth / 2 - a.clientWidth / 2, behavior: reduced ? 'auto' : 'smooth' }); },
+  slide: el => { const a = document.querySelector('#aether .archipelago'); if (!a) return; const c = a.querySelector('.cluster'); a.scrollBy({ left: (+el.dataset.dir) * ((c ? c.offsetWidth : 300) + 28), behavior: reduced ? 'auto' : 'smooth' }); },
+  'v-undo': () => { const id = ui.victory && ui.victory.id; hideVictory(); uncompleteQuest(getQ(id)); renderAll(); go(1); toast('Undone. The quest is back on its island.'); },
+  uncomplete: () => { const q = currentQ(); if (!q) return; uncompleteQuest(q); ui.vStage = null; renderAll(); toast('Back to active. The XP for finishing it was taken back.'); },
   'v-return': () => { hideVictory(); go(1); renderFirmament(); },
   'v-stay': () => { hideVictory(); renderFirmament(); }
 };
@@ -2493,6 +2622,11 @@ document.addEventListener('click', e => {
   if (!keep) ui.confirm = null;
   f(el, e);
 });
+document.addEventListener('scroll', e => {
+  const t = e.target; if (!t || !t.classList) return;
+  if (t.classList.contains('archipelago')){ ui.slide = t.scrollLeft; updateArchNav(); }
+  else if (t.classList.contains('ceiling-track') || t.id === 'scroll-0') ui.slide = t.scrollLeft;
+}, true);
 document.addEventListener('input', e => {
   const t = e.target;
   if (t.dataset.field && ui.draft){ ui.draft[t.dataset.field] = t.value; return; }
@@ -2548,7 +2682,7 @@ if (!saved) persist({ quiet: true });
 const firstVisit = !saved;
 ui.zone = (firstVisit && !reduced) ? 0 : 1;
 applyCamera(true); setInert(); renderAll();
-setTimeout(() => { try { makeCloudSprites(); } catch (e) { console.error(e); } paintAetherBackdrop(); drawStreams(); }, 40);
+setTimeout(() => { try { makeCloudSprites(); document.documentElement.style.setProperty('--root-tile', `url(${rootTileURL()})`); } catch (e) { console.error(e); } paintAetherBackdrop(); drawStreams(); }, 40);
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawStreams);
 scrollers[0].scrollTop = scrollers[0].scrollHeight;
 if (firstVisit && !reduced) setTimeout(() => go(1), 1100);
