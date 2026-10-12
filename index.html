@@ -411,6 +411,12 @@ canvas.paint.instant{transition:none}
   box-shadow:0 0 0 2px rgba(255,255,255,.82),0 0 10px 2px var(--cg),0 0 24px 6px var(--cg2)}
 .z-aether::after{content:'';position:absolute;left:0;right:0;bottom:0;height:calc(var(--vh)*.09);z-index:0;pointer-events:none;background:linear-gradient(rgba(246,249,255,0),rgba(246,249,255,.92) 70%,rgb(247,250,255))}
 
+.realm-saying{margin:22px auto 0;max-width:54ch;text-align:center;font-style:italic;font-size:17px;line-height:1.5;color:#fff;text-shadow:0 1px 10px rgba(12,60,140,.6),0 0 2px rgba(12,60,140,.45)}
+.realm-saying,#firm-saying,#wind-saying,#roots-saying{transition:opacity .42s ease}
+.fading{opacity:0!important}
+.edge{transition:opacity .25s ease,background .15s}
+.moving .edge,.moving .root-door{opacity:0!important;pointer-events:none}
+
 /* ---------- toast ---------- */
 .toast{position:fixed;top:16px;left:50%;z-index:40;transform:translate(-50%,-170%);visibility:hidden;background:rgba(8,28,70,.92);color:#fff;border:1px solid rgba(255,214,107,.7);padding:9px 20px;border-radius:999px;font-weight:700;font-size:16px;box-shadow:0 10px 24px -8px rgba(0,20,60,.6);transition:transform .35s cubic-bezier(.3,1.3,.5,1),visibility 0s .35s;max-width:calc(100% - 32px);text-align:center}
 .toast.show{transform:translate(-50%,0);visibility:visible;transition:transform .35s cubic-bezier(.3,1.3,.5,1)}
@@ -476,7 +482,7 @@ canvas.paint.instant{transition:none}
     <div class="scroller" id="scroll-0"><div class="firm-canvas" id="firm-canvas"></div></div>
     <div class="firm-head">
       <h2>The firmament</h2>
-      <p>Every quest you finish becomes a star, linked into its category's constellation. Lone stars are quests still ahead.</p>
+      <p id="firm-saying">Every quest you finish becomes a star, linked into its category's constellation. Lone stars are quests still ahead.</p>
     </div>
     <button class="edge firm-down" id="firm-down" data-go="1"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 6 8 10.5 12.5 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Descend to the aether</button>
     <div class="victory" id="victory" role="dialog" aria-label="Quest complete" hidden></div>
@@ -1915,6 +1921,109 @@ function seedStyle(hex){
   return `--c:${hex};--cl:${rgba(l)};--cd:${rgba(d)};--cg:${rgba(c, .55)};--cg2:${rgba(c, .2)}`;
 }
 
+
+/* ================= sayings: one rotating line for each realm ================= */
+const SAYINGS = {
+  firm: [
+    "Every star up here was once something you weren't sure you could do.",
+    "The sky doesn't rank its stars. The small ones shine too.",
+    "A constellation is just a pattern someone kept adding to.",
+    "A lone star is a constellation that hasn't happened yet.",
+    "Light takes its time getting anywhere. It still arrives.",
+    "Nobody watches a constellation form. One night you look up and it's there.",
+    "The dark is what makes the stars easy to find.",
+    "Each star is a small promise you kept.",
+    "Even the faintest star was worth lighting.",
+    "Which star are you reaching for next?",
+    "The sky has room for every star you'll ever make.",
+    "Stars don't hurry, and neither do you have to.",
+    "Look how far up the night goes now.",
+    "A thread of light only ever needs one more star.",
+    "What would you like the sky to remember about this week?",
+    "Some nights you add a star. Some nights you just look at the ones you have."
+  ],
+  aether: [
+    "Islands don't float because they're big. They float because something holds them.",
+    "The wind is always moving. You don't have to be.",
+    "Every island started as a single patch of grass.",
+    "You don't have to cross the whole sky today. Just reach the next island.",
+    "What's one small thing you could plant today?",
+    "Even the highest island is reached one step at a time.",
+    "The sun finds every island eventually.",
+    "A sapling doesn't worry about being a tree yet.",
+    "Some days the sky is clear. Some days you fly by feel.",
+    "Which island would feel lighter with one thing finished?",
+    "Even birds land somewhere to rest.",
+    "Small steps still leave footprints in the grass.",
+    "Nothing in the aether grows all at once.",
+    "A quiet day in the sky is still a day in the sky.",
+    "Clouds drift a long way before they rain. That still counts as getting somewhere.",
+    "Where is the wind pulling you today?"
+  ],
+  wind: [
+    "Not every whisper needs an answer today.",
+    "The wind carries what you're not ready to hold.",
+    "A rumor costs nothing to keep.",
+    "Some ideas need to drift for a while before they land.",
+    "What has the wind been whispering lately?",
+    "Write it down, then let it fly. It will wait for you.",
+    "Paper birds go wherever the wind does, and come back when you call.",
+    "Hearing about a quest isn't the same as owing it anything.",
+    "The sky is big enough for maybes.",
+    "Which of these is quietly asking to be next?",
+    "Some rumors turn out to be quests. Some turn out to be wind.",
+    "Letting one drift away is a choice too.",
+    "A thought set down is a weight set down.",
+    "Not yet is a perfectly good answer."
+  ],
+  roots: [
+    "Everything you've finished holds the islands up.",
+    "Roots grow in the dark, where nobody's watching.",
+    "What you finished is still here, even on the days you forget.",
+    "The deeper the roots, the calmer the island.",
+    "Every seed here is a day you showed up.",
+    "Roots don't need to be seen to be strong.",
+    "Look back sometimes. It's a long way down from where you started.",
+    "Which of these did you think you'd never get to?",
+    "Even the smallest root holds a little weight.",
+    "Growth looks quiet from the inside.",
+    "The roots remember, so you don't have to.",
+    "An island is only as steady as what holds it from below.",
+    "Rain still finds the roots on cloudy days.",
+    "When the sky feels heavy, come count the seeds."
+  ]
+};
+const EXPLAIN = {
+  firm: "Every quest you finish becomes a star, linked into its category's constellation. Lone stars are quests still ahead.",
+  wind: "Rumors are quests you've heard about but haven't taken on. Note them here without committing to anything."
+};
+const SAY_IDS = { firm: 'firm-saying', aether: 'aether-saying', wind: 'wind-saying', roots: 'roots-saying' };
+const say = {};
+Object.keys(SAYINGS).forEach(k => { say[k] = Math.floor(Math.random() * SAYINGS[k].length); });
+const saying = k => SAYINGS[k][say[k] % SAYINGS[k].length];
+function nextSaying(k){
+  const n = SAYINGS[k].length; if (n < 2) return;
+  let i; do { i = Math.floor(Math.random() * n); } while (i === say[k]);
+  say[k] = i;
+}
+function showSaying(k, fade){
+  const el = $(SAY_IDS[k]); if (!el || el.dataset.explain === '1') return;
+  const txt = saying(k);
+  if (!fade || reduced){ el.textContent = txt; return; }
+  el.classList.add('fading');
+  setTimeout(() => { el.textContent = txt; el.classList.remove('fading'); }, 420);
+}
+function rotateSayings(zone, fade){
+  const keys = zone === 0 ? ['firm'] : zone === 1 ? ['aether', 'wind'] : ['roots'];
+  keys.forEach(k => { nextSaying(k); showSaying(k, fade); });
+}
+function syncFirmSaying(){
+  const el = $('firm-saying'); if (!el) return;
+  const any = state.quests.some(q => q.status === 'done');
+  el.dataset.explain = any ? '' : '1';
+  el.textContent = any ? saying('firm') : EXPLAIN.firm;
+}
+
 /* ================= render: world ================= */
 function renderAll(){
   renderAether(); renderFirmament(); renderRoots(); renderRail();
@@ -1949,13 +2058,14 @@ function renderAether(){
     </div>
   </header>`;
   if (!state.seenHint) h += `<div class="hint-note"><p>Tap an islet to open its quest. Scroll up past the clouds to reach the stars, or down to the roots.</p><button class="btn btn-quiet btn-sm" data-action="dismiss-hint">Got it</button></div>`;
+  h += `<p class="realm-saying" id="aether-saying">${esc(saying('aether'))}</p>`;
   h += `<div class="arch-wrap"><div class="archipelago">${state.categories.map(clusterHTML).join('')}</div>
     <button class="arch-nav prev" data-action="slide" data-dir="-1" aria-label="Show earlier islands"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5 5.5 8 10 12.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <button class="arch-nav next" data-action="slide" data-dir="1" aria-label="Show more islands"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <div class="arch-dots" role="group" aria-label="Islands">${state.categories.map((c, i) => `<button class="arch-dot" data-action="slide-to" data-i="${i}" style="--c:${c.color}" aria-label="Show ${esc(c.name)}"></button>`).join('')}</div></div>`;
   h += `<section class="wind" aria-label="Rumors">
     <h2 class="wind-h">On the wind</h2>
-    <p class="wind-sub">Rumors are quests you've heard about but haven't taken on. Note them here without committing to anything.</p>
+    <p class="wind-sub" id="wind-saying" data-explain="${rumors.length ? '' : '1'}">${esc(rumors.length ? saying('wind') : EXPLAIN.wind)}</p>
     <div class="birds">${rumors.map((q, k) => `<button class="bird" data-action="open" data-id="${q.id}" style="--d:${(-k * 1.3).toFixed(1)}s">${ICON.bird}<span>${esc(q.title)}</span></button>`).join('')}
       <button class="bird bird-add" data-action="new" data-dest="rumor">+ Note a rumor</button></div>
   </section>
@@ -1998,6 +2108,7 @@ function isletHTML(q){
 }
 
 function renderFirmament(){
+  syncFirmSaying();
   const sc = $('scroll-0'), cv = $('firm-canvas');
   const cats = state.categories, n = cats.length;
   const Wv = sc.clientWidth || innerWidth, Hv = sc.clientHeight || innerHeight;
@@ -2077,7 +2188,7 @@ function renderRoots(){
   const all = state.quests.filter(q => q.status === 'done').sort((a, b) => b.completed - a.completed);
   const list = ui.rootsFilter === 'all' ? all : all.filter(q => q.categoryId === ui.rootsFilter);
   let h = `<button class="edge edge-dark edge-top" data-go="1">${ICON.up}Rise to the aether</button>${rootsCeilingSlot()}
-    <div class="roots-body"><h2 class="roots-h">The roots</h2><p class="roots-sub">Everything you've finished holds the islands up.</p>`;
+    <div class="roots-body"><h2 class="roots-h">The roots</h2><p class="roots-sub" id="roots-saying">${esc(saying('roots'))}</p>`;
   if (!all.length){
     h += `<p class="tally">Nothing has taken root yet. When you finish a quest, it settles here, so you can come back any time and see how far you've come.</p>`;
   } else {
@@ -2090,8 +2201,8 @@ function renderRoots(){
       ${rq.reward ? `<p class="r-sub">Reward: ${esc(rq.reward)}</p>` : ''}
       ${all.length > 1 ? `<button class="btn btn-quiet btn-sm" data-action="recall">Recall another</button>` : ''}</div>`;
     h += `<div class="chips" role="group" aria-label="Show finished quests from">
-      <button class="chip" data-action="filter" data-cat="all" aria-pressed="${ui.rootsFilter === 'all'}">All ${all.length}</button>
-      ${state.categories.map(c => { const m = all.filter(q => q.categoryId === c.id).length; return m ? `<button class="chip" data-action="filter" data-cat="${c.id}" aria-pressed="${ui.rootsFilter === c.id}"><span class="dot" style="--c:${c.color}"></span>${esc(c.name)} ${m}</button>` : ''; }).join('')}
+      <button class="chip" data-action="filter" data-cat="all" aria-pressed="${ui.rootsFilter === 'all'}">All (${all.length})</button>
+      ${state.categories.map(c => { const m = all.filter(q => q.categoryId === c.id).length; return m ? `<button class="chip" data-action="filter" data-cat="${c.id}" aria-pressed="${ui.rootsFilter === c.id}"><span class="dot" style="--c:${c.color}"></span>${esc(c.name)} (${m})</button>` : ''; }).join('')}
     </div>`;
     const groups = [];
     list.forEach(q => { const m = fmtMonth(q.completed); let g = groups[groups.length - 1]; if (!g || g.m !== m){ g = { m, items: [] }; groups.push(g); } g.items.push(q); });
@@ -2323,7 +2434,7 @@ function go(z, opts){
   if (ui.zone === 0 && z !== 0) hideVictory();
   hideTip(); applySlide();
   if (z === ui.zone){ applyCamera(); return; }
-  moving();
+  moving(); rotateSayings(z, false);
   ui.zone = z;
   navLock = Date.now() + 1600;
   edge[z] = {};
@@ -2687,6 +2798,7 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawStream
 scrollers[0].scrollTop = scrollers[0].scrollHeight;
 if (firstVisit && !reduced) setTimeout(() => go(1), 1100);
 startSync();
+setInterval(() => { if (!document.hidden && !ui.journal) rotateSayings(ui.zone, true); }, 50000);
 if (!canSave) setTimeout(() => toast("This browser isn't letting the page save. Export a backup in Settings before closing."), 900);
 })();
 </script>
